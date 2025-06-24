@@ -198,7 +198,7 @@ export async function storeInvoice({ customerId, status, date, amountInCents }: 
     `;
   } catch (err) {
     console.error('Database Error:', err);
-    throw new Error('Failed to fetch all customers.');
+    throw new Error('Failed to store invoice.');
   }
 }
 
@@ -211,7 +211,16 @@ export async function updateInvoice({ id, customerId, status, amountInCents }: I
     `;
   } catch (err) {
     console.error('Database Error:', err);
-    throw new Error('Failed to fetch all customers.');
+    throw new Error('Failed to edit invoice.');
+  }
+}
+
+export async function destroyInvoice(id: string) {
+  try {
+    return await sql`DELETE FROM invoices WHERE id = ${id}`;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to delete invoice.');
   }
 }
 
