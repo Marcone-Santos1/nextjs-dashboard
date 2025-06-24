@@ -5,6 +5,8 @@ import {destroyInvoice, storeInvoice, updateInvoice} from "@/app/lib/data";
 import {InvoiceStore, InvoiceUpdate} from "@/app/lib/definitions";
 import {revalidatePath} from 'next/cache';
 import {redirect} from 'next/navigation';
+import {signIn} from "@/auth";
+import { AuthError } from 'next-auth';
 
 export type State = {
     errors?: {
@@ -114,4 +116,23 @@ export async function deleteInvoice(id: string) {
         console.error(error);
     }
     revalidatePath('/dashboard/invoices');
+}
+
+export async function authenticate(
+    prevState: string | undefined,
+    formData: FormData,
+) {
+    try {
+        await signIn('credentials', formData);
+    } catch (error) {
+        if (error instanceof AuthError) {
+            switch (error.type) {
+                case 'CredentialsSignin':
+                    return 'Invalid credentials.';
+                default:
+                    return 'Something went wrong.';
+            }
+        }
+        throw error;
+    }
 }
