@@ -2,12 +2,13 @@ import postgres from 'postgres';
 import {
   CustomerField,
   CustomersTableType,
+  Invoice,
   InvoiceForm,
-  InvoicesTable,
+  InvoicesTable, InvoiceStore, InvoiceUpdate,
   LatestInvoiceRaw,
   Revenue,
 } from './definitions';
-import { formatCurrency } from './utils';
+import {formatCurrency} from './utils';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -16,12 +17,12 @@ export async function fetchRevenue() {
     // Artificially delay a response for demo purposes.
     // Don't do this in production :)
 
-    // console.log('Fetching revenue data...');
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.log('Fetching revenue data...');
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const data = await sql<Revenue[]>`SELECT * FROM revenue`;
 
-    // console.log('Data fetch completed after 3 seconds.');
+    console.log('Data fetch completed after 3 seconds.');
 
     return data;
   } catch (error) {
@@ -32,6 +33,9 @@ export async function fetchRevenue() {
 
 export async function fetchLatestInvoices() {
   try {
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
     const data = await sql<LatestInvoiceRaw[]>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
@@ -52,6 +56,8 @@ export async function fetchLatestInvoices() {
 
 export async function fetchCardData() {
   try {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
     // how to initialize multiple queries in parallel with JS.
@@ -178,6 +184,31 @@ export async function fetchCustomers() {
     `;
 
     return customers;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch all customers.');
+  }
+}
+
+export async function storeInvoice({ customerId, status, date, amountInCents }: InvoiceStore) {
+  try {
+    return await sql`
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    `;
+  } catch (err) {
+    console.error('Database Error:', err);
+    throw new Error('Failed to fetch all customers.');
+  }
+}
+
+export async function updateInvoice({ id, customerId, status, amountInCents }: InvoiceUpdate) {
+  try {
+    return await sql`
+      UPDATE invoices
+      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+      WHERE id = ${id}
+    `;
   } catch (err) {
     console.error('Database Error:', err);
     throw new Error('Failed to fetch all customers.');
